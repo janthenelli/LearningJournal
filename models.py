@@ -1,3 +1,5 @@
+import datetime
+
 from flask_bcrypt import generate_password_hash
 from flask_login import UserMixin
 from peewee import *
@@ -25,3 +27,19 @@ class User(UserMixin, Model):
                 )
         except IntegrityError:
             raise ValueError("User already exists.")
+
+class Entry(Model):
+    user = ForeignKeyField(
+        rel_model=User,
+        related_name='entries'
+    )
+    title = CharField(unique=True)
+    date = DateField(default=datetime.date.today)
+    time_spent = IntegerField(default=0)
+    learned = TextField()
+    resources = TextFeild
+
+    class Meta:
+        database = DATABASE
+
+
