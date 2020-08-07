@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, g, redirect, url_for, request
+from flask import Flask, render_template, flash, g, redirect, url_for, request, abort
 from flask_bcrypt import check_password_hash
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from peewee import DoesNotExist
@@ -33,7 +33,7 @@ def before_request():
     
     
 @app.after_request
-def after_request():
+def after_request(response):
     g.db.close()
     return response
 
@@ -52,7 +52,7 @@ def register():
         else:
             flash("User '{}' created successfully!".format(form.email.data), "success")
             return redirect(url_for('index'))
-    return render_template('register.html' form=form)
+    return render_template('register.html', form=form)
 
 @app.route('/login', methods=('GET', 'POST'))
 def login():
@@ -105,3 +105,19 @@ def new_entry():
         return redirect(url_for('index'))
     return render_template('new.html')
 
+@app.route('/entries/<int:id>')
+@login_required
+def view_entry(id):
+    try:
+        selected_entry = models.Entry.get_by_id(id)
+    except DoesNotExist:
+        abort(404)
+    else:
+        selected_entry_tags = set(models.Tag.select().join(models.EntryTag).where(models.EntryTag.entry == selected_entry))
+    return render_template('detail.html', entry=selected_entry, tags=selected_entry_tags)
+
+
+
+if __name__ == '__main__':
+    models.initialize()
+    app.run(debug=DEBUG, host=HOST, port=PORT)

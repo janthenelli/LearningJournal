@@ -43,7 +43,7 @@ class Entry(MetaModel):
     date = DateField(default=datetime.date.today)
     time_spent = IntegerField(default=0)
     learned = TextField()
-    resources = TextFeild
+    resources = TextField()
 
 
 class Tag(MetaModel):
@@ -56,7 +56,7 @@ class EntryTag(Model):
     class Meta:
         database = DATABASE
         indexes = (
-            (('entry', 'tags'), True)
+            (('entry', 'tags'), True),
         )
 
     @classmethod
@@ -67,11 +67,11 @@ class EntryTag(Model):
             pass
         else:
             try:
-                or tag in entry_tags:
-                cls.create(
-                    entry=entry,
-                    tag=tag
-                )
+                for tag in entry_tags:
+                    cls.create(
+                        entry=entry,
+                        tag=tag
+                    )
             except IntegrityError:
                 pass
 
@@ -101,10 +101,10 @@ class EntryTag(Model):
             try:
                 for tag in entry_tags:
                     unwanted_tag = cls.get(tag=tag, entry=entry)
-                except DoesNotExist:
-                    pass
-                else:
-                    unwanted_tag.delete_instance()
+            except DoesNotExist:
+                pass
+            else:
+                unwanted_tag.delete_instance()
 
 
 def initialize():

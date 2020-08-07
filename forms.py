@@ -1,3 +1,4 @@
+from flask_wtf import FlaskForm
 from wtforms import Form, StringField, PasswordField, TextAreaField
 from wtforms.validators import InputRequired, Email, Length, EqualTo, ValidationError
 from wtforms.fields.html5 import IntegerField, DateField
@@ -13,7 +14,7 @@ def title_exists(form, field):
     if User.select().where(User.email ** field.data).exists():
         raise ValidationError('That title has already been user, select a unique title.')
 
-class RegistrationForm(Form):
+class RegistrationForm(FlaskForm):
     email = StringField(
         'Email',
         validators=[
@@ -43,7 +44,7 @@ class RegistrationForm(Form):
         ]
     )
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     email = StringField(
         'Email',
         validators=[
@@ -58,11 +59,11 @@ class LoginForm(Form):
         ]
     )
 
-class EntryForm(Form):
+class EntryForm(FlaskForm):
     title = StringField(
         'Title',
         validators=[
-            InputRequired(message="You must include a title for your entry.")
+            InputRequired(message="You must include a title for your entry."),
             title_exists
         ]
     )
