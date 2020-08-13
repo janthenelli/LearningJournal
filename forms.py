@@ -3,16 +3,20 @@ from wtforms import Form, StringField, PasswordField, TextAreaField
 from wtforms.validators import InputRequired, Email, Length, EqualTo, ValidationError
 from wtforms.fields.html5 import IntegerField, DateField
 
-from models import User, Entry
+import models
 
 
 def email_exists(form, field):
-    if User.select().where(User.email == field.data).exists():
+    if models.User.select().where(models.User.email == field.data).exists():
         raise ValidationError('User with that email already exists.')
 
 def title_exists(form, field):
-    if User.select().where(User.email ** field.data).exists():
+    if models.Entry.select().where(models.Entry.title ** field.data).exists():
         raise ValidationError('That title has already been user, select a unique title.')
+
+def tag_exists(form, field):
+    if models.Tag.select().where(models.Tag.tag ** field.data).exists():
+        raise ValidationError('That tag already exists.')
 
 class RegistrationForm(FlaskForm):
     email = StringField(
@@ -87,4 +91,42 @@ class EntryForm(FlaskForm):
     )
     resources = TextAreaField(
         'Resources you need to remember'
+    )
+
+class EditForm(FlaskForm):
+    title = StringField(
+        'Title',
+        validators=[
+            InputRequired(message="You must include a title for your entry.")
+        ]
+    )
+    date = DateField(
+        'Date',
+        validators=[
+            InputRequired(message="Please enter a date.")
+        ]
+    )
+    time_spent = IntegerField(
+        'Number of hours spent on task',
+        validators=[
+            InputRequired(message="How long did this task take you to complete?")
+        ]
+    )
+    learned = TextAreaField(
+        'What you learned',
+        validators=[
+            InputRequired(message="What did you learn?")
+        ]
+    )
+    resources = TextAreaField(
+        'Resources you need to remember'
+    )
+
+class TagForm(FlaskForm):
+    tag = StringField(
+        'Tag Name',
+        validators=[
+            InputRequired(message="Your tag must have a title."),
+            tag_exists
+        ]
     )

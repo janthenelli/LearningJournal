@@ -17,6 +17,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+
 @login_manager.user_loader
 def load_user(userid):
     try:
@@ -24,18 +25,17 @@ def load_user(userid):
     except models.DoesNotExist:
         return None
     
-    
 @app.before_request
 def before_request():
     g.db = models.DATABASE
     g.db.connect()
     g.user = current_user
     
-    
 @app.after_request
 def after_request(response):
     g.db.close()
     return response
+
 
 @app.route('/register', methods=('GET', 'POST'))
 def register():
@@ -84,7 +84,7 @@ def index():
     entries = models.Entry.select()
     display_entries = []
     for entry in entries:
-        entry_tag = set((models.Tags.select().join(models.EntryTag).where(models.EntryTag.entry == entry)))
+        entry_tag = set((models.Tag.select().join(models.EntryTag).where(models.EntryTag.entry == entry)))
         display_entries.append([entry, entry_tag])
     return render_template('index.html', entries=display_entries)
 
@@ -102,21 +102,114 @@ def new_entry():
             resources = form.resources.data.strip()
         )
         flash("Entry created!", "success")
+        models.EntryTag.tag_new_entry(models.Entry.get(title=form.title.data.strip()))
         return redirect(url_for('index'))
-    return render_template('new.html')
+    return render_template('new.html', form=form)
 
 @app.route('/entries/<int:id>')
 @login_required
 def view_entry(id):
     try:
-        selected_entry = models.Entry.get_by_id(id)
+        selected_entry = models.Entry.get(models.Entry.id == id)
     except DoesNotExist:
         abort(404)
     else:
-        selected_entry_tags = set(models.Tag.select().join(models.EntryTag).where(models.EntryTag.entry == selected_entry))
+        selected_entry_tags = set((models.Tag.select().join(models.EntryTag).where(models.EntryTag.entry == selected_entry)))
     return render_template('detail.html', entry=selected_entry, tags=selected_entry_tags)
 
+@app.route('/entries/<int:id>/edit', methods=('GET', 'POST'))
+@login_required
+def edit_entry(id):
+    try:
+        entry = models.Entry.get(models.Entry.id == id)
+    except models.DoesNotExist:
+        abort(404)
+    else:
+        form = forms.EditForm(
+            title=entry.title,
+            date=entry.date,
+            time_spent=entry.time_spent,
+            learned=entry.learned,
+            resources=entry.resources
+        )
+        if form.validate_on_submit():
+            entry.title = form.title.data.strip()
+            entry.date = form.date.data
+            entry.time_spent = form.time_spent.data
+            entry.learned = form.learned.data.strip()
+            entry.resources = form.resources.data.strip()
+            entry.save()
+            flash("Entry updated.", "success")
+            models.EntryTag.remove_tag(models.Entry.get(title=form.title.data.strip()))
+            models.EntryTag.tag_new_entry(models.Entry.get(title=form.title.data.strip()))
+            return redirect(url_for('index'))
+    return render_template('edit.html', form=form, entry=entry)
 
+@app.route('/entries/<int:id>/delete', methods=('GET', 'POST'))
+@login_required
+def delete_entry(id):
+    try:
+        entry = models.Entry.get(models.Entry.id == id)
+        try:
+            tag_relationship = models.EntryTag.get(entry=entry)
+            tag_relationship.delete_instance()
+        except models.DoesNotExist:
+            pass
+    except models.DoesNotExist:
+        abort(404)
+    else:
+        entry.delete_instance()
+        flash("Entry deleted.", "success")
+        return redirect(url_for('index'))
+
+@app.route('/new_tag', methods=('GET', 'POST'))
+@login_required
+def create_tag():
+    form = forms.TagForm()
+    if form.validate_on_submit():
+        models.Tag.create(tag=form.tag.data.strip())
+        flash("Tag created.", "success")
+        models.EntryTag.tag_current_entries(models.Tag.get(tag=form.tag.data.strip()))
+        return redirect(url_for('index'))
+    return render_template('create_tag.html', form=form)
+
+@app.route('/entries/<tag>')
+@login_required
+def entries_by_tag(tag):
+    display_entries = []
+    try:
+        tagged_entries = set((models.Entry.select().join(models.EntryTag).join(models.Tag).where(models.Tag.tag == tag).order_by(models.Entry.date.desc())))
+    except models.DoesNotExist:
+        redirect(url_for('index'))
+    else:
+        for entry in tagged_entries:
+            entry_tags = set((models.Tag.select().join(models.EntryTag).where(models.EntryTag.entry == entry)))
+            display_entries.append([entry, entry_tags])
+    return render_template('index.html', entries=display_entries)
+
+@app.route('/tags')
+@login_required
+def view_tags():
+    tags = set(models.Tag.select())
+    return render_template('view_tags.html', tags=tags)
+
+@app.route('/tags/<tag>', methods=('GET', 'POST'))
+@login_required
+def delete_tag(tag):
+    try: 
+        tag_to_delete = models.Tag.get(tag=tag)
+        tag_relationship = models.EntryTag.get(tag=tag_to_delete)
+    except models.DoesNotExist:
+        abort(404)
+    else:
+        tag_relationship.delete_instance()
+        tag_to_delete.delete_instance()
+        flash("Tag deleted.", "success")
+        return redirect(url_for('index'))
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
 
 if __name__ == '__main__':
     models.initialize()

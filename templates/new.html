@@ -8,9 +8,11 @@
             {{ form.hidden_tag() }}
             <div>{{ form.title.label }}{{ render_field(form.title) }}</div>
             <div>{{ form.date.label }}{{ render_field(form.date) }}</div>
-            <div>{{ form.time_spent.label }}{{ render_field(form.time_spent) }}</div>
+            <div>{{ form.time_spent.label }}{{ render_field(form.time_spent(min=0)) }}</div>
             <div>{{ form.learned.label }}{{ render_field(form.learned) }}</div>
             <div>{{ form.resources.label }}{{ render_field(form.resources) }}</div>
+            <input type="submit" value="Publish Entry" class="button icon-left"><br><br>
+            <a href="{{ url_for('index') }}" class="button icon-left">Cancel</a>
         </form>
     </div>
 {% endblock %}

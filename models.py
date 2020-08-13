@@ -36,7 +36,7 @@ class MetaModel(Model):
 
 class Entry(MetaModel):
     user = ForeignKeyField(
-        rel_model=User,
+        User,
         related_name='entries'
     )
     title = CharField(unique=True)
@@ -62,12 +62,12 @@ class EntryTag(Model):
     @classmethod
     def tag_current_entries(cls, tag):
         try:
-            entry_tags = Entry.select().where(Entry.content.contains(tag.tag))
+            entry_tags = Entry.select().where(Entry.learned.contains(tag.tag))
         except DoesNotExist:
             pass
         else:
             try:
-                for tag in entry_tags:
+                for entry in entry_tags:
                     cls.create(
                         entry=entry,
                         tag=tag
@@ -76,9 +76,9 @@ class EntryTag(Model):
                 pass
 
     @classmethod
-    def add_tag_to_new_entry(cls, entry):
+    def tag_new_entry(cls, entry):
         try:
-            entry_tags = Tag.select().where(Tag.tag.in_(re.findall(r"[\w']+|[.,!?;]", every.content)))
+            entry_tags = Tag.select().where(Tag.tag.in_(re.findall(r"[\w']+|[.,!?;]", entry.learned)))
         except DoesNotExist:
             pass
         else:
@@ -94,7 +94,7 @@ class EntryTag(Model):
     @classmethod
     def remove_tag(cls, entry):
         try:
-            entry_tags = Tag.select().where(Tag.tag.not_in_(re.findall(r"[\w']+|{.,!?;]", every.content)))
+            entry_tags = Tag.select().where(Tag.tag.not_in(re.findall(r"[\w']+|{.,!?;]", entry.learned)))
         except DoesNotExist:
             pass
         else:
@@ -109,5 +109,5 @@ class EntryTag(Model):
 
 def initialize():
     DATABASE.connect()
-    DATABASE.create_tables([User, Entry, Tag, EntryTag], safe=True)
+    DATABASE.create_tables([User, Tag, Entry, EntryTag], safe=True)
     DATABASE.close()

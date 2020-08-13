@@ -9,7 +9,7 @@
                     <time datetime="{{ entry[0].date.strftime('%m/%d/%Y') }}">{{ entry[0].date.strftime('%m/%d/%Y') }}</time>
 
                     {% for tag in entry[1] %}
-                        <a class="button" href="{{ url_for('entries_by_tag') }}">{{ tag.tag }}</a>
+                        <a class="button" href="{{ url_for('entries_by_tag', tag=tag.tag) }}">{{ tag.tag }}</a>
                     {% endfor %}
                 </article>
             {% endfor %}
