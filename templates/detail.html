@@ -21,7 +21,7 @@
             </div>
             <div class="entry">
                 {% for tag in tags %}
-                    <a href="{{ url_for('entries_by_tag') }}, tag=tag.tag">{{ tag.tag }}</a>
+                    <a class="button tag" href="{{ url_for('entries_by_tag', tag=tag.tag) }}">{{ tag.tag }}</a>
                 {% endfor %}
             </div>
         </article>
