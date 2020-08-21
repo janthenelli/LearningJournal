@@ -4,7 +4,7 @@
     <div class="container">
         <div class="entry-list">
             {% for entry in entries %}
-                <article>
+                <article class="single"> 
                     <h2><a href="{{ url_for('view_entry', id=entry[0].id) }}">{{ entry[0].title }}</a></h2>
                     <time datetime="{{ entry[0].date.strftime('%m/%d/%Y') }}">{{ entry[0].date.strftime('%m/%d/%Y') }}</time>
 

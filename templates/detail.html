@@ -20,6 +20,7 @@
                 <p>{{ entry.resources }}</p>
             </div>
             <div class="entry">
+                <h3 style="margin-bottom: 30px;">Tags:</h3>
                 {% for tag in tags %}
                     <a class="button tag" href="{{ url_for('entries_by_tag', tag=tag.tag) }}">{{ tag.tag }}</a>
                 {% endfor %}
