@@ -1,6 +1,6 @@
 # Learning Journal
 
-** 'pip install -r requirements.txt' to get everything required for the program to be up and running! **
+** 'pip install -r requirements.txt' to get everything required for the program and then 'python journal.py' to run the app **
 
 Utilizing Flask and Python, this learning journal allows you to create, edit, and delete your own entries about anything you may have learned.
 
